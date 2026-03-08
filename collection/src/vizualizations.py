@@ -84,6 +84,19 @@ def viz_ui():
             ),
             ui.div(
                 # ----------------------
+                # Summary statistics
+                # ----------------------
+                ui.layout_columns(
+                    ui.card(
+                        ui.card_header("Total Collection Value"),
+                        ui.output_text("total_value"),
+                    ),
+                    ui.card(
+                        ui.card_header("Total Purchased Value (Excluding Prizes)"),
+                        ui.output_text("total_value_no_prizes"),
+                    ),
+                ),
+                # ----------------------
                 # Row 1: Pie charts
                 # ----------------------
                 ui.layout_columns(
@@ -143,6 +156,30 @@ def viz_server(input, output, session):
         df["price_target"] = convert_prices(df, target).round(2)
         df = clean_for_altair(df)
         return df
+
+    # -----------------------------
+    # Summary statistics
+    # -----------------------------
+    @output
+    @render.text
+    def total_value():
+        df = data_converted()
+
+        total = df["price_target"].dropna().sum()
+        currency = input.target_currency()
+
+        return f"{total:,.2f} {currency}"
+
+    @output
+    @render.text
+    def total_value_no_prizes():
+        df = data_converted()
+
+        total = df[df["prize"] != True]["price_target"].dropna().sum()
+
+        currency = input.target_currency()
+
+        return f"{total:,.2f} {currency}"
 
     # -----------------------------
     # Brand Pie Chart
