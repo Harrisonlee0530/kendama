@@ -1,0 +1,17 @@
+name: kendama
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - altair
+  - vl-convert-python
+  - jupyterlab
+  - pandas
+  - anywidget
+  - shiny
+  - shinywidgets
+  - pip
+  - pip:
+    - querychat
+    - chatlas
+    - python-dotenv
