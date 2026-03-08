@@ -6,6 +6,7 @@ from chatbot import chatbot_ui, chatbot_server
 from vizualizations import viz_ui, viz_server
 from dotenv import load_dotenv
 from pathlib import Path
+import shinyswatch
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 

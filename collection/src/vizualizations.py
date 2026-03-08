@@ -57,7 +57,6 @@ def convert_prices(df: pd.DataFrame, target: str) -> pd.Series:
     pd.Series
         Converted prices
     """
-    print("\n\nstart conversion\n\n")
     url = f"https://open.er-api.com/v6/latest/{target}"
     rates = requests.get(url).json()["rates"]
 
@@ -65,14 +64,70 @@ def convert_prices(df: pd.DataFrame, target: str) -> pd.Series:
     rate_series = df["currency"].map(rates)
 
     # convert prices
-    print("\n\nend conversion\n\n")
     return df["price"] / rate_series
+
+
+BLUE_THEME = ui.tags.style(
+    """
+    :root {
+        --primary-blue: #1f4fa3;
+        --light-blue: #e8f1fb;
+        --accent-blue: #3b82f6;
+    }
+
+    body {
+        background-color: var(--light-blue);
+    }
+
+    .navbar {
+        background-color: var(--primary-blue) !important;
+    }
+
+    .navbar-brand, .nav-link {
+        color: white !important;
+    }
+
+    .card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+        background-color: var(--primary-blue);
+        color: white;
+        font-weight: 600;
+    }
+
+    .sidebar {
+        background-color: white;
+        border-right: 1px solid #e2e8f0;
+    }
+
+    .form-select {
+        border-radius: 6px;
+    }
+
+    .value-box {
+        background-color: white;
+        border-left: 5px solid var(--accent-blue);
+        padding: 12px;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    footer {
+        color: #64748b;
+    }
+    """
+)
 
 
 def viz_ui():
 
     return ui.nav_panel(
         "Homepage",
+        BLUE_THEME, 
         ui.layout_sidebar(
             ui.sidebar(
                 ui.input_select(
@@ -135,7 +190,7 @@ def viz_ui():
                         output_widget("other_price_bar"),
                         full_screen=True,
                     ),
-                    col_widths=[6, 6],
+                    col_widths=[3, 3, 3, 3],
                 ),
             ),
             fillable=True,
@@ -195,7 +250,6 @@ def viz_server(input, output, session):
             .reset_index()
         )
         brand.columns = ["brand", "count"]
-        # print("\n\nbrand", brand)
 
         return (
             alt.Chart(brand)
@@ -221,7 +275,6 @@ def viz_server(input, output, session):
             .reset_index()
         )
         vendor.columns = ["vendor", "count"]
-        # print("\n\nvendor", vendor)
 
         return (
             alt.Chart(vendor)
@@ -239,7 +292,6 @@ def viz_server(input, output, session):
     def price_bar(df):
         df = df.dropna(subset=["price_target"])
         df = df[["price_target"]]
-        # print("\n\n", df)
 
         return (
             alt.Chart(df)
