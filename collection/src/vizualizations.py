@@ -30,17 +30,6 @@ FOOTER = ui.p(
 )
 
 
-def clean_for_altair(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Make dataframe safe for Altair/Vega JSON serialization
-    """
-    df = df.copy()
-
-    # Replace NaN / inf with None
-    df = df.replace([np.nan, np.inf, -np.inf], None)
-    return df
-
-
 def convert_prices(df: pd.DataFrame, target: str) -> pd.Series:
     """
     Convert mixed-currency prices to a target currency.
@@ -127,7 +116,7 @@ def viz_ui():
 
     return ui.nav_panel(
         "Homepage",
-        BLUE_THEME, 
+        BLUE_THEME,
         ui.layout_sidebar(
             ui.sidebar(
                 ui.input_select(
@@ -139,7 +128,7 @@ def viz_ui():
             ),
             ui.div(
                 # ----------------------
-                # Summary statistics
+                # Row 1: Summary statistics
                 # ----------------------
                 ui.layout_columns(
                     ui.card(
@@ -150,9 +139,14 @@ def viz_ui():
                         ui.card_header("Total Purchased Value (Excluding Prizes)"),
                         ui.output_text("total_value_no_prizes"),
                     ),
+                    ui.card(
+                        ui.card_header("Effective Kendama Sets"),
+                        ui.output_text("kendama_sets"),
+                    ),
+                    col_widths=[4, 4, 4],
                 ),
                 # ----------------------
-                # Row 1: Pie charts
+                # Row 2: Pie charts
                 # ----------------------
                 ui.layout_columns(
                     ui.card(
@@ -167,30 +161,14 @@ def viz_ui():
                     ),
                 ),
                 # ----------------------
-                # Row 2–3: Bar charts (2x2)
+                # Row 3: Bar chart
                 # ----------------------
                 ui.layout_columns(
                     ui.card(
-                        ui.card_header("Full Kendama Price Distribution"),
-                        output_widget("kendama_price_bar"),
+                        ui.card_header("Price Distribution by Item Type"),
+                        output_widget("price_distribution"),
                         full_screen=True,
                     ),
-                    ui.card(
-                        ui.card_header("Ken Only Price Distribution"),
-                        output_widget("ken_price_bar"),
-                        full_screen=True,
-                    ),
-                    ui.card(
-                        ui.card_header("Tama Only Price Distribution"),
-                        output_widget("tama_price_bar"),
-                        full_screen=True,
-                    ),
-                    ui.card(
-                        ui.card_header("Other Item Price Distribution"),
-                        output_widget("other_price_bar"),
-                        full_screen=True,
-                    ),
-                    col_widths=[3, 3, 3, 3],
                 ),
             ),
             fillable=True,
@@ -208,8 +186,25 @@ def viz_server(input, output, session):
     def data_converted():
         df = raw_data.copy()
         target = input.target_currency()
+
         df["price_target"] = convert_prices(df, target).round(2)
-        df = clean_for_altair(df)
+
+        df["item_type"] = np.select(
+            [
+                df["kendama"] == True,
+                df["ken_only"] == True,
+                df["tama_only"] == True,
+                df["other"] == True,
+            ],
+            [
+                "Full Kendama",
+                "Ken Only",
+                "Tama Only",
+                "Other",
+            ],
+            default="Unknown",
+        )
+
         return df
 
     # -----------------------------
@@ -235,6 +230,25 @@ def viz_server(input, output, session):
         currency = input.target_currency()
 
         return f"{total:,.2f} {currency}"
+
+    # -----------------------------
+    # Effective kendama sets
+    # -----------------------------
+    @output
+    @render.text
+    def kendama_sets():
+        df = data_converted()
+
+        kendama = df["kendama"].sum()
+        ken_only = df["ken_only"].sum()
+        tama_only = df["tama_only"].sum()
+
+        sets = kendama + 0.5 * ken_only + 0.5 * tama_only
+        print("kendama", kendama)
+        print("ken", ken_only)
+        print("tama", tama_only)
+
+        return f"{sets:.1f}"
 
     # -----------------------------
     # Brand Pie Chart
@@ -287,58 +301,27 @@ def viz_server(input, output, session):
         )
 
     # -----------------------------
-    # Helper for bar charts
+    # Price Distribution Chart
     # -----------------------------
-    def price_bar(df):
-        df = df.dropna(subset=["price_target"])
-        df = df[["price_target"]]
+    @render_altair
+    def price_distribution():
+        df = data_converted()[['product_name', 'price_target', 'item_type']]
 
         return (
             alt.Chart(df)
-            .mark_bar()
+            .mark_bar(opacity=0.7)
             .encode(
-                x=alt.X("price_target:Q", bin=True, title="Price"),
-                y="count()",
-                tooltip=["count()"],
+                x=alt.X(
+                    "price_target:Q",
+                    bin=alt.Bin(maxbins=25),
+                    title="Price"
+                ),
+                y=alt.Y("count()", title="Items"),
+                color=alt.Color(
+                    "item_type:N",
+                    title="Item Type"
+                ),
+                tooltip=["item_type", "count()"]
             )
+            .properties(height=350)
         )
-
-    # -----------------------------
-    # Full Kendama
-    # -----------------------------
-    @render_altair
-    def kendama_price_bar():
-        df = data_converted()
-        subset = df[df["kendama"] == True]
-
-        return price_bar(subset)
-
-    # -----------------------------
-    # Ken Only
-    # -----------------------------
-    @render_altair
-    def ken_price_bar():
-        df = data_converted()
-        subset = df[df["ken_only"] == True]
-
-        return price_bar(subset)
-
-    # -----------------------------
-    # Tama Only
-    # -----------------------------
-    @render_altair
-    def tama_price_bar():
-        df = data_converted()
-        subset = df[df["tama_only"] == True]
-
-        return price_bar(subset)
-
-    # -----------------------------
-    # Other Items
-    # -----------------------------
-    @render_altair
-    def other_price_bar():
-        df = data_converted()
-        subset = df[df["other"] == True]
-
-        return price_bar(subset)
