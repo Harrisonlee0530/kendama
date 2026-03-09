@@ -297,25 +297,64 @@ def viz_server(input, output, session):
     # -----------------------------
     # Price Distribution Chart
     # -----------------------------
+    # @render_altair
+    # def price_distribution():
+    #     df = data_converted()[['product_name', 'price_target', 'item_type']]
+
+    #     return (
+    #         alt.Chart(df)
+    #         .mark_bar(opacity=0.7)
+    #         .encode(
+    #             x=alt.X(
+    #                 "price_target:Q",
+    #                 bin=alt.Bin(maxbins=25),
+    #                 title="Price"
+    #             ),
+    #             y=alt.Y("count()", title="Items"),
+    #             color=alt.Color(
+    #                 "item_type:N",
+    #                 title="Item Type"
+    #             ),
+    #             tooltip=["item_type", "count()"]
+    #         )
+    #         .properties(height=350)
+    #     )
     @render_altair
     def price_distribution():
-        df = data_converted()[['product_name', 'price_target', 'item_type']]
+        df = data_converted()[["product_name", "price_target", "item_type"]].dropna()
+
+        # create bins
+        df["price_bin"] = pd.cut(df["price_target"], bins=25)
+
+        grouped = (
+            df.groupby(["price_bin", "item_type"])
+            .agg(
+                count=("product_name", "count"),
+                products=("product_name", lambda x: ", ".join(x))
+            )
+            .reset_index()
+        )
+
+        # convert Interval → string
+        grouped["price_bin"] = grouped["price_bin"].astype(str)
 
         return (
-            alt.Chart(df)
-            .mark_bar(opacity=0.7)
+            alt.Chart(grouped)
+            .mark_bar(opacity=0.8)
             .encode(
                 x=alt.X(
-                    "price_target:Q",
-                    bin=alt.Bin(maxbins=25),
-                    title="Price"
+                    "price_bin:N",
+                    title="Price Range",
+                    sort=None,
+                    axis=alt.Axis(labelAngle=-30)
                 ),
-                y=alt.Y("count()", title="Items"),
-                color=alt.Color(
-                    "item_type:N",
-                    title="Item Type"
-                ),
-                tooltip=["item_type", "count()"]
+                y=alt.Y("count:Q", title="Items"),
+                color=alt.Color("item_type:N", title="Item Type"),
+                tooltip=[
+                    alt.Tooltip("item_type:N", title="Item Type"),
+                    alt.Tooltip("count:Q", title="Items"),
+                    alt.Tooltip("products:N", title="Products"),
+                ],
             )
             .properties(height=350)
         )
