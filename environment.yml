@@ -10,6 +10,7 @@ dependencies:
   - anywidget
   - shiny
   - shinywidgets
+  - pymongo
   - pip
   - pip:
     - querychat
