@@ -132,18 +132,14 @@ def viz_ui():
                 # ----------------------
                 ui.layout_columns(
                     ui.card(
-                        ui.card_header("Total Collection Value"),
-                        ui.output_text("total_value"),
+                        ui.card_header("Collection Value"),
+                        ui.output_ui("total_values"),
                     ),
                     ui.card(
-                        ui.card_header("Total Purchased Value (Excluding Prizes)"),
-                        ui.output_text("total_value_no_prizes"),
+                        ui.card_header("Collection Breakdown"),
+                        ui.output_ui("kendama_sets"),
                     ),
-                    ui.card(
-                        ui.card_header("Effective Kendama Sets"),
-                        ui.output_text("kendama_sets"),
-                    ),
-                    col_widths=[4, 4, 4],
+                    col_widths=[6, 6],
                 ),
                 # ----------------------
                 # Row 2: Pie charts
@@ -211,44 +207,42 @@ def viz_server(input, output, session):
     # Summary statistics
     # -----------------------------
     @output
-    @render.text
-    def total_value():
+    @render.ui
+    def total_values():
         df = data_converted()
 
         total = df["price_target"].dropna().sum()
+        purchased = df[df["prize"] != True]["price_target"].dropna().sum()
         currency = input.target_currency()
 
-        return f"{total:,.2f} {currency}"
-
-    @output
-    @render.text
-    def total_value_no_prizes():
-        df = data_converted()
-
-        total = df[df["prize"] != True]["price_target"].dropna().sum()
-
-        currency = input.target_currency()
-
-        return f"{total:,.2f} {currency}"
+        return ui.HTML(f"""
+            <div>
+                <div><b>Total Value:</b> {total:,.2f} {currency}</div>
+                <div><b>Purchased Value (Excluding Prizes):</b> {purchased:,.2f} {currency}</div>
+            </div>
+        """)
 
     # -----------------------------
     # Effective kendama sets
     # -----------------------------
     @output
-    @render.text
+    @render.ui
     def kendama_sets():
         df = data_converted()
 
-        kendama = df["kendama"].sum()
-        ken_only = df["ken_only"].sum()
-        tama_only = df["tama_only"].sum()
+        kendama = int(df["kendama"].sum())
+        ken_only = int(df["ken_only"].sum())
+        tama_only = int(df["tama_only"].sum())
+        other = int(df["other"].sum())
 
-        sets = kendama + 0.5 * ken_only + 0.5 * tama_only
-        print("kendama", kendama)
-        print("ken", ken_only)
-        print("tama", tama_only)
-
-        return f"{sets:.1f}"
+        return ui.HTML(f"""
+            <div>
+                <div>Kendamas: {kendama}</div>
+                <div>Ken Only: {ken_only}</div>
+                <div>Tama Only: {tama_only}</div>
+                <div>Other Items: {other}</div>
+            </div>
+        """)
 
     # -----------------------------
     # Brand Pie Chart
