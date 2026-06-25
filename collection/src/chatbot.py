@@ -99,7 +99,8 @@ def chatbot_ui():
                 ui.output_data_frame("chatbot_table"),
                 full_screen=True,
             ),
-            fillable=True,
+            # fillable=True,
+            height="80vh",
         ),
         FOOTER,
     )
