@@ -1,0 +1,12 @@
+altair
+vl-convert-python
+jupyterlab
+pandas
+anywidget
+shiny
+shinywidgets
+pymongo
+querychat
+chatlas
+python-dotenv
+shinyswatch
