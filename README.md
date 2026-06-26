@@ -1,2 +1,3 @@
 # kendama
-Project to Gather kendama related data and make visualizations
+
+Project to manage my kendama collection and make visualizations

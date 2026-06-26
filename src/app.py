@@ -7,7 +7,9 @@ from visualizations import viz_ui, viz_server
 from dotenv import load_dotenv
 from pathlib import Path
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(Path(__file__).parent / ".env")
+
+print(os.listdir("."))
 
 CSV_FILE = "data/kendama_collection.csv"
 
