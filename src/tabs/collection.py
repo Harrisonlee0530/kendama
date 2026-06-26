@@ -113,32 +113,30 @@ def collection_server(input, output, session):
     @reactive.effect
     @reactive.event(input.add)
     def add_row():
-        new_row = pd.DataFrame(
-            [
-                {
-                    "product_name": input.product_name(),
-                    "brand": input.brand(),
-                    "kendama": input.category() == "kendama",
-                    "ken_only": input.category() == "ken_only",
-                    "tama_only": input.category() == "tama_only",
-                    "other": input.category() == "other",
-                    "ken_weight_g": input.ken_weight_g(),
-                    "tama_weight_g": input.tama_weight_g(),
-                    "price": input.price(),
-                    "currency": input.currency(),
-                    "purchased_date": input.purchased_date(),
-                    "purchased_from": input.purchased_from(),
-                    "order_id": input.order_id(),
-                    "event": input.event(),
-                    "prize": input.prize(),
-                    "comment": input.comment(),
-                }
-            ]
-        )
+        new_row = pd.DataFrame([{
+            "product_name": input.product_name(),
+            "brand": input.brand(),
+            "kendama": input.category() == "kendama",
+            "ken_only": input.category() == "ken_only",
+            "tama_only": input.category() == "tama_only",
+            "other": input.category() == "other",
+            "ken_weight_g": input.ken_weight_g(),
+            "tama_weight_g": input.tama_weight_g(),
+            "price": input.price(),
+            "currency": input.currency(),
+            "purchased_date": input.purchased_date(),
+            "purchased_from": input.purchased_from(),
+            "order_id": input.order_id(),
+            "event": input.event(),
+            "prize": input.prize(),
+            "comment": input.comment(),
+        }])
 
         updated_df = pd.concat([data(), new_row], ignore_index=True)
         updated_df["purchased_date"] = (
-            updated_df["purchased_date"].astype(str).str.replace(" 00:00:00", "")
+            updated_df["purchased_date"].astype(str).str.replace(
+                " 00:00:00", ""
+            )
         )
         data.set(updated_df)
         updated_df.to_csv(CSV_FILE, index=False)
@@ -148,7 +146,6 @@ def collection_server(input, output, session):
     @reactive.event(input.delete)
     def delete_row():
         selected = list(input.table_selected_rows())
-        # print(selected)
         if selected:
             df = data()
             df = df.drop(selected).reset_index(drop=True)
@@ -162,7 +159,9 @@ def collection_server(input, output, session):
         _ = input.deselect()
         rendered_df = data().copy()
         rendered_df["purchased_date"] = (
-            rendered_df["purchased_date"].astype(str).str.replace(" 00:00:00", "")
+            rendered_df["purchased_date"].astype(str).str.replace(
+                " 00:00:00", ""
+            )
         )
         return render.DataGrid(rendered_df, selection_mode="rows")
 
@@ -172,6 +171,8 @@ def collection_server(input, output, session):
     def download_csv():
         output_data = data().copy()
         output_data["purchased_date"] = (
-            output_data["purchased_date"].astype(str).str.replace(" 00:00:00", "")
+            output_data["purchased_date"].astype(str).str.replace(
+                " 00:00:00", ""
+            )
         )
-        yield output_data().to_csv(index=False)
+        yield output_data.to_csv(index=False)
