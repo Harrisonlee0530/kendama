@@ -9,7 +9,6 @@ Requires a .env file in the project root with the following key:
     GITHUB_TOKEN=your_github_token_here
 """
 
-
 from pathlib import Path
 from shiny import ui, render
 import querychat
@@ -19,7 +18,7 @@ import pandas as pd
 
 # Load API keys from .env (project root)
 # .env should exist at the root of the directory, not inside src/
-load_dotenv(Path(__file__).parent.parent / ".env")
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 raw_data = pd.read_csv("data/kendama_collection.csv")
 

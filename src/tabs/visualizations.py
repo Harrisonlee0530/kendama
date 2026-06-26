@@ -10,7 +10,6 @@ from pathlib import Path
 from shiny import ui, render, reactive
 from shinywidgets import render_altair, output_widget
 
-
 raw_data = pd.read_csv("data/kendama_collection.csv")
 
 raw_data["price"] = pd.to_numeric(raw_data["price"])
@@ -18,13 +17,11 @@ raw_data["brand"] = raw_data["brand"].fillna("Other")
 raw_data["purchased_from"] = raw_data["purchased_from"].fillna("Other")
 
 FOOTER = ui.p(
-    ui.HTML(
-        """
+    ui.HTML("""
         Kendama Collection | Author: Harrison Li | 
         Repository: <a href="https://github.com/Harrisonlee0530/kendama" target="_blank">https://github.com/Harrisonlee0530/kendama</a> | 
         Last updated: 2026-03-05
-        """
-    ),
+        """),
     class_="text-center text-muted",
     style="margin-top: 2rem; padding: 1rem; border-top: 1px solid #eee;",
 )
@@ -56,8 +53,7 @@ def convert_prices(df: pd.DataFrame, target: str) -> pd.Series:
     return df["price"] / rate_series
 
 
-BLUE_THEME = ui.tags.style(
-    """
+BLUE_THEME = ui.tags.style("""
     :root {
         --primary-blue: #1f4fa3;
         --light-blue: #e8f1fb;
@@ -108,12 +104,10 @@ BLUE_THEME = ui.tags.style(
     footer {
         color: #64748b;
     }
-    """
-)
+    """)
 
 
 def viz_ui():
-
     return ui.nav_panel(
         "Homepage",
         BLUE_THEME,
@@ -297,28 +291,6 @@ def viz_server(input, output, session):
     # -----------------------------
     # Price Distribution Chart
     # -----------------------------
-    # @render_altair
-    # def price_distribution():
-    #     df = data_converted()[['product_name', 'price_target', 'item_type']]
-
-    #     return (
-    #         alt.Chart(df)
-    #         .mark_bar(opacity=0.7)
-    #         .encode(
-    #             x=alt.X(
-    #                 "price_target:Q",
-    #                 bin=alt.Bin(maxbins=25),
-    #                 title="Price"
-    #             ),
-    #             y=alt.Y("count()", title="Items"),
-    #             color=alt.Color(
-    #                 "item_type:N",
-    #                 title="Item Type"
-    #             ),
-    #             tooltip=["item_type", "count()"]
-    #         )
-    #         .properties(height=350)
-    #     )
     @render_altair
     def price_distribution():
         df = data_converted()[["product_name", "price_target", "item_type"]].dropna()
@@ -330,7 +302,7 @@ def viz_server(input, output, session):
             df.groupby(["price_bin", "item_type"])
             .agg(
                 count=("product_name", "count"),
-                products=("product_name", lambda x: ", ".join(x))
+                products=("product_name", lambda x: ", ".join(x)),
             )
             .reset_index()
         )
@@ -346,7 +318,7 @@ def viz_server(input, output, session):
                     "price_bin:N",
                     title="Price Range",
                     sort=None,
-                    axis=alt.Axis(labelAngle=-30)
+                    axis=alt.Axis(labelAngle=-30),
                 ),
                 y=alt.Y("count:Q", title="Items"),
                 color=alt.Color("item_type:N", title="Item Type"),
